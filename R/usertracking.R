@@ -1,8 +1,8 @@
 
 #' Add user tracking
 #'
-#' Log session ID, username (only for Private apps), session start and end to a
-#' Google sheet.
+#' Log session ID, username (only for Private apps), session start, end and
+#' duration to a Google sheet.
 #'
 #' @param google_email Email used for Google account username.
 #' @param sheet_id Google sheet ID.
@@ -19,7 +19,8 @@
 #' server <- function(input, output, session) {
 #'   shinyusertracking::set_user_tracking(
 #'     "joe.bloggs@google.com",
-#'     "1234567890987654321"
+#'     "1234567890987654321",
+#'     session
 #'   )
 #' }
 #'
