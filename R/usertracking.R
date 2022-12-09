@@ -34,7 +34,7 @@ set_user_tracking <- function(google_email, sheet_id, session) {
   )
 
   shiny::isolate({
-    userdata <<- userdata <- data.frame(
+    userdata <<- userdata <- data.frame( # Exclude Linting
       id = session$token,
       username = ifelse(is.null(session$user), "unknown", session$user),
       login = Sys.time(),
