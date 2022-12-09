@@ -36,32 +36,3 @@ server <- function(input, output, session) {
 
 shinyApp(ui, server)
 ```
-
-
-#' Add user tracking
-#'
-#' Log session ID, username (only for Private apps), session start and end to a
-#' Google sheet.
-#'
-#' @param google_email Email used for Google account username.
-#' @param sheet_id Google sheet ID.
-#' @param session Shiny session object.
-#'
-#' @return Nothing; used for side effect.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' library(shiny)
-#'
-#' ui <- fluidPage()
-#' server <- function(input, output, session) {
-#'   shinyusertracking::set_user_tracking(
-#'     "joe.bloggs@google.com",
-#'     "1234567890987654321"
-#'   )
-#' }
-#'
-#' shinyApp(ui, server)
-#' }
-#'
