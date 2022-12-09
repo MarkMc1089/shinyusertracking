@@ -14,7 +14,7 @@ You can install `shinyusertracking` from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("MarkMc1089/shinyusertracking")
+devtools::install_github("nhsbsa-data-analytics/shinyusertracking")
 ```
 
 ## Example
