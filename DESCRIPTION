@@ -1,10 +1,13 @@
 Package: shinyusertracking
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Add user tracking to Shiny apps
+Version: 1.0.0.000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person(
+      "Mark", "McPherson", , 
+      "mark.mcpherson1@nhs.net",
+      role = c("aut", "cre")
+    )
+Description: Log session and user data to a Google sheet.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -13,3 +16,8 @@ Suggests:
     covr,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Imports: 
+    shiny,
+    googlesheets4,
+    hms,
+    lubridate
