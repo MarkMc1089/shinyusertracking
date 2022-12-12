@@ -28,6 +28,10 @@
 #' }
 #'
 set_user_tracking <- function(google_email, sheet_id, session) {
+  if (sheet_id == "") {
+    return(invisible())
+  }
+
   googlesheets4::gs4_auth(
     email = google_email,
     cache = ".secret/"
