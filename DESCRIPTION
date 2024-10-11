@@ -1,6 +1,6 @@
 Package: shinyusertracking
 Title: Add user tracking to Shiny apps
-Version: 1.0.0.000
+Version: 1.0.1.000
 Authors@R: 
     person(
       "Mark", "McPherson", , 
@@ -11,13 +11,8 @@ Description: Log session and user data to a Google sheet.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.2
-Suggests: 
-    covr,
-    testthat (>= 3.0.0)
+RoxygenNote: 7.3.1
 Config/testthat/edition: 3
 Imports: 
-    shiny,
     googlesheets4,
-    hms,
     lubridate
