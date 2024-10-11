@@ -4,12 +4,11 @@
 \alias{set_user_tracking}
 \title{Add user tracking}
 \usage{
-set_user_tracking(google_email, sheet_id, session)
+set_user_tracking(columns = NULL, session)
 }
 \arguments{
-\item{google_email}{Email used for Google account username.}
-
-\item{sheet_id}{Google sheet ID.}
+\item{columns}{Which columns to record, from id, username, login, logout and
+duration. By default all will be recorded.}
 
 \item{session}{Shiny session object.}
 }
@@ -27,8 +26,7 @@ library(shiny)
 ui <- fluidPage()
 server <- function(input, output, session) {
   shinyusertracking::set_user_tracking(
-    "joe.bloggs@google.com",
-    "1234567890987654321",
+    c("login", "logout", "duration"),
     session
   )
 }
