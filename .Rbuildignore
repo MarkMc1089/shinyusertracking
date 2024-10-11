@@ -2,6 +2,5 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^\.lintr$
-^\.pre-commit-config\.yaml$
-^codecov\.yml$
 ^\.github$
+^\.google-sheets-credentials.example$
