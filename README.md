@@ -31,9 +31,12 @@ duration|Duration of session in `hh:mm:ss` format
 3. IMPORTANT: You must tell git to ignore this! `usethis::use_git_ignore(".google-sheets-credentials")`.
 4. IMPORTANT: While you are at it, also `usethis::use_git_ignore(".secret/")`. This is the directory in which the Google authorisation secret will be stored.
 5. Replace the example for `GOOGLE_SHEET_ID` with the ID of the Google sheet. You can find this in the URL. For example, if the URL is `https://docs.google.com/spreadsheets/d/1vwrKiwX4T_-A2IldWnjcd1PHlCDsGAq9U-yTtQ6tgzk/edit?gid=0#gid=0`, the ID is `1vwrKiwX4T_-A2IldWnjcd1PHlCDsGAq9U-yTtQ6tgzk`.
-6. Replace the example for `GOOGLE_SHEET_USER` with the Google account username.
+6. Replace the example for `GOOGLE_SHEET_USER` with the Google account username. See the page _Coding and Dashboards/ R code/Shiny app visit tracking_ in the DALL Wiki for details of a Data Science team Google account to use.
 7. Add the code at the top of your `server` function.
+8. The first time it is run, you will be asked to authenticate the Google account access. Once this is done, an authorisation token will be stored in the `.secrets` directory. This can be reused when adding visit tracking for another app. So alternatively, you could copy an existing `.secret` directory, with the token inside, and paste into the root directory of your app. Note that you will not be able to confirm the access on AVDs, as the Google pages to do so are not whitelisted. See the page _Coding and Dashboards/ R code/Shiny app visit tracking_ in the DALL Wiki for details of where to find an existing token.
 8. Ensure you bundle both the `.google-sheets-credentials` file and the `.secret` directory when your app is deployed.
+
+Note that 'visits' when running it locally in development will also track. So you might want to introduce some configuration to only run in production. Alternatively, try to remember to delete any entries logged during development from the Google sheet.
 
 ## Example
 
