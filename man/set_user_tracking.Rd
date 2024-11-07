@@ -2,18 +2,27 @@
 % Please edit documentation in R/usertracking.R
 \name{set_user_tracking}
 \alias{set_user_tracking}
-\title{Add user tracking}
+\title{Add visit tracking to Shiny app}
 \usage{
-set_user_tracking(columns = NULL, session)
+set_user_tracking(
+  session,
+  sheet_name = pkgload::pkg_name(),
+  columns = NULL,
+  creds = ".google-sheets-credentials"
+)
 }
 \arguments{
+\item{session}{Shiny session object.}
+
+\item{sheet_name}{Name for the sheet. Default is to use current package name.}
+
 \item{columns}{Which columns to record, from id, username, login, logout and
 duration. By default all will be recorded.}
 
-\item{session}{Shiny session object.}
+\item{creds}{File used to store credentials. Defaults to \code{.google-sheets-credentials}.}
 }
 \value{
-Nothing; used for side effect.
+Nothing, used for side-effects only
 }
 \description{
 Log session ID, username (only for Private apps), session start, end and
@@ -33,5 +42,4 @@ server <- function(input, output, session) {
 
 shinyApp(ui, server)
 }
-
 }

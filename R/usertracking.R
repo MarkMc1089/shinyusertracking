@@ -1,3 +1,64 @@
+#' Securely ask for Google sheet ID and username
+#'
+#' Uses Rstudio secret functionality together with the keyring package to securely
+#' store the input values. If keyring is not installed and up to date, the option to
+#' do so will be given. Once keyring is present, tick the box to save the secrets.
+#' The next time this is run, the secrets will be pre-filled.
+#'
+#' @param file File used to store credentials. Defaults to `.google-sheets-credentials`.
+#' @param overwrite Whether to overwrite file if it already exists. Default is FALSE.
+#'
+#' @return Nothing, used for side-effects only
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' add_credentials(overwrite = TRUE)
+#' }
+add_credentials <- function(file = ".google-sheets-credentials", overwrite = FALSE) {
+  if (!overwrite && file.exists(file)) {
+    stop(
+      "Credentials file ", file, " already exists; set overwrite = TRUE if you are sure."
+    )
+  }
+
+  writeLines(
+    c(
+      paste0(
+        "GOOGLE_SHEET_ID=",
+        tryCatch(
+          rstudioapi::askForSecret("GOOGLE_SHEET_ID"),
+          error = \(e) stop("Aborting...")
+        )
+      ),
+      paste0(
+        "GOOGLE_SHEET_USER=",
+        tryCatch(
+          rstudioapi::askForSecret("GOOGLE_SHEET_USER"),
+          error = \(e) stop("Aborting...")
+        )
+      )
+    ),
+    file
+  )
+
+  usethis::use_git_ignore(file)
+}
+
+
+#' Set environment variables for the Google sheet ID and username
+#'
+#' @param file File used to store credentials. Defaults to `.google-sheets-credentials`.
+#'
+#' @return Nothing, used for side-effects only
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' set_credentials()
+#' }
 set_credentials <- function(file = ".google-sheets-credentials") {
   if (file.exists(file)) {
     tryCatch(
@@ -8,19 +69,27 @@ set_credentials <- function(file = ".google-sheets-credentials") {
     stop("File ", file, " does not exist")
   }
 
-  ID <- "GOOGLE_SHEET_ID"
-  id_line <- lines[startsWith(lines, ID)]
-  if (!length(id_line)) stop("No value for ", ID, " in ", file)
+  id <- "GOOGLE_SHEET_ID"
+  id_line <- lines[startsWith(lines, id)]
+  if (!length(id_line)) stop("No value for ", id, " in ", file)
 
-  USER  <- "GOOGLE_SHEET_USER"
-  user_line  <- lines[startsWith(lines, USER)]
-  if (!length(user_line)) stop("No value for ", USER, " in ", file)
+  user <- "GOOGLE_SHEET_USER"
+  user_line <- lines[startsWith(lines, user)]
+  if (!length(user_line)) stop("No value for ", user, " in ", file)
 
-  Sys.setenv(GOOGLE_SHEET_ID = gsub('^[^\\=]*\\=(.*)$', '\\1', id_line))
-  Sys.setenv(GOOGLE_SHEET_USER = gsub('^[^\\=]*\\=(.*)$', '\\1', user_line))
+  Sys.setenv(GOOGLE_SHEET_ID = gsub("^[^\\=]*\\=(.*)$", "\\1", id_line))
+  Sys.setenv(GOOGLE_SHEET_USER = gsub("^[^\\=]*\\=(.*)$", "\\1", user_line))
 }
 
 
+#' Check that only known columns are provided
+#'
+#' @param columns Either NULL or vector of column names.
+#'
+#' @return The provided columns, if all are known; all known columns if NULL input;
+#'  or error if some provided columns are not known.
+#'
+#' @noRd
 check_cols <- function(columns) {
   known_cols <- c(
     "id",
@@ -31,22 +100,45 @@ check_cols <- function(columns) {
   )
 
   if (is.null(columns)) {
-    columns <- known_cols
+    return(known_cols)
   } else {
     stopifnot(
       "Columns not in: id, username, login, logout, duration" = columns %in% known_cols
     )
   }
+
+  columns
 }
 
 
-setup_sheet <- function(sheet_name = pkgload::pkg_name(), columns = NULL) {
-  check_cols(columns)
+#' Add a new sheet for tracking to the Google sheets
+#'
+#' @param sheet_name Name for the sheet. Default is to use current package name.
+#' @param columns Either NULL or vector of column names. Names must be known. Known
+#'  columns are id, username, login, logout and duration
+#' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
+#'
+#' @return Nothing, used for side-effects only
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' setup_sheet("A new Shiny app", c("login", "logout", "duration"))
+#' }
+setup_sheet <- function(sheet_name = pkgload::pkg_name(),
+                        columns = NULL,
+                        creds = ".google-sheets-credentials") {
+  columns <- check_cols(columns)
+
+  set_credentials(creds)
 
   googlesheets4::gs4_auth(
     email = Sys.getenv("GOOGLE_SHEET_USER"),
     cache = ".secret/"
   )
+
+  usethis::use_git_ignore(".secret")
 
   googlesheets4::sheet_add(Sys.getenv("GOOGLE_SHEET_ID"), sheet_name)
   googlesheets4::sheet_append(
@@ -57,16 +149,19 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(), columns = NULL) {
 }
 
 
-#' Add user tracking
+#' Add visit tracking to Shiny app
 #'
 #' Log session ID, username (only for Private apps), session start, end and
 #' duration to a Google sheet.
 #'
+#' @param session Shiny session object.
+#' @param sheet_name Name for the sheet. Default is to use current package name.
 #' @param columns Which columns to record, from id, username, login, logout and
 #'  duration. By default all will be recorded.
-#' @param session Shiny session object.
+#' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
 #'
-#' @return Nothing; used for side effect.
+#' @return Nothing, used for side-effects only
+#'
 #' @export
 #'
 #' @examples
@@ -83,9 +178,13 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(), columns = NULL) {
 #'
 #' shinyApp(ui, server)
 #' }
-#'
-set_user_tracking <- function(columns = NULL, session) {
-  check_cols(columns)
+set_user_tracking <- function(session,
+                              sheet_name = pkgload::pkg_name(),
+                              columns = NULL,
+                              creds = ".google-sheets-credentials") {
+  columns <- check_cols(columns)
+
+  set_credentials(creds)
 
   googlesheets4::gs4_auth(
     email = Sys.getenv("GOOGLE_SHEET_USER"),
@@ -120,7 +219,8 @@ set_user_tracking <- function(columns = NULL, session) {
 
     googlesheets4::sheet_append(
       Sys.getenv("GOOGLE_SHEET_ID"),
-      subset(session$userData$tracking, select = columns)
+      subset(session$userData$tracking, select = columns),
+      sheet_name
     )
   })
 }
