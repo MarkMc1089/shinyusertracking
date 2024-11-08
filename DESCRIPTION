@@ -1,6 +1,6 @@
 Package: shinyusertracking
 Title: Add user tracking to Shiny apps
-Version: 1.0.1.000
+Version: 1.0.2.000
 Authors@R: 
     person(
       "Mark", "McPherson", , 
@@ -13,6 +13,14 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Config/testthat/edition: 3
+VignetteBuilder: knitr
 Imports: 
     googlesheets4,
-    lubridate
+    lubridate,
+    pkgload,
+    rstudioapi,
+    shiny,
+    usethis
+Suggests:
+    knitr,
+    rmarkdown

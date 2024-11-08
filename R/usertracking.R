@@ -1,13 +1,166 @@
-#' Add user tracking
+#' Securely ask for Google sheet ID and username
+#'
+#' Uses Rstudio secret functionality together with the keyring package to securely
+#' store the input values. If keyring is not installed and up to date, the option to
+#' do so will be given. Once keyring is present, tick the box to save the secrets.
+#' The next time this is run, the secrets will be pre-filled.
+#'
+#' @param file File used to store credentials. Defaults to `.google-sheets-credentials`.
+#' @param overwrite Whether to overwrite file if it already exists. Default is FALSE.
+#'
+#' @return Nothing, used for side-effects only
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' add_credentials(overwrite = TRUE)
+#' }
+add_credentials <- function(file = ".google-sheets-credentials", overwrite = FALSE) {
+  if (!overwrite && file.exists(file)) {
+    stop(
+      "Credentials file ", file, " already exists; set overwrite = TRUE if you are sure."
+    )
+  }
+
+  writeLines(
+    c(
+      paste0(
+        "GOOGLE_SHEET_ID=",
+        tryCatch(
+          rstudioapi::askForSecret("GOOGLE_SHEET_ID"),
+          error = \(e) stop("Aborting...")
+        )
+      ),
+      paste0(
+        "GOOGLE_SHEET_USER=",
+        tryCatch(
+          rstudioapi::askForSecret("GOOGLE_SHEET_USER"),
+          error = \(e) stop("Aborting...")
+        )
+      )
+    ),
+    file
+  )
+
+  usethis::use_git_ignore(file)
+}
+
+
+#' Set environment variables for the Google sheet ID and username
+#'
+#' @param file File used to store credentials. Defaults to `.google-sheets-credentials`.
+#'
+#' @return Nothing, used for side-effects only
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' set_credentials()
+#' }
+set_credentials <- function(file = ".google-sheets-credentials") {
+  if (file.exists(file)) {
+    tryCatch(
+      lines <- readLines(file),
+      error = \(e) stop("Error reading lines from ", file)
+    )
+  } else {
+    stop("File ", file, " does not exist")
+  }
+
+  id <- "GOOGLE_SHEET_ID"
+  id_line <- lines[startsWith(lines, id)]
+  if (!length(id_line)) stop("No value for ", id, " in ", file)
+
+  user <- "GOOGLE_SHEET_USER"
+  user_line <- lines[startsWith(lines, user)]
+  if (!length(user_line)) stop("No value for ", user, " in ", file)
+
+  Sys.setenv(GOOGLE_SHEET_ID = gsub("^[^\\=]*\\=(.*)$", "\\1", id_line))
+  Sys.setenv(GOOGLE_SHEET_USER = gsub("^[^\\=]*\\=(.*)$", "\\1", user_line))
+}
+
+
+#' Check that only known columns are provided
+#'
+#' @param columns Either NULL or vector of column names.
+#'
+#' @return The provided columns, if all are known; all known columns if NULL input;
+#'  or error if some provided columns are not known.
+#'
+#' @noRd
+check_cols <- function(columns) {
+  known_cols <- c(
+    "id",
+    "username",
+    "login",
+    "logout",
+    "duration"
+  )
+
+  if (is.null(columns)) {
+    return(known_cols)
+  } else {
+    stopifnot(
+      "Columns not in: id, username, login, logout, duration" = columns %in% known_cols
+    )
+  }
+
+  columns
+}
+
+
+#' Add a new sheet for tracking to the Google sheets
+#'
+#' @param sheet_name Name for the sheet. Default is to use current package name.
+#' @param columns Which columns to log, from id, username, login, logout and
+#'  duration. By default login, logout and duration will be logged.
+#' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
+#'
+#' @return Nothing, used for side-effects only
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' setup_sheet("A new Shiny app", c("login", "logout", "duration"))
+#' }
+setup_sheet <- function(sheet_name = pkgload::pkg_name(),
+                        columns = c("login", "logout", "duration"),
+                        creds = ".google-sheets-credentials") {
+  columns <- check_cols(columns)
+
+  set_credentials(creds)
+
+  googlesheets4::gs4_auth(
+    email = Sys.getenv("GOOGLE_SHEET_USER"),
+    cache = ".secret/"
+  )
+
+  usethis::use_git_ignore(".secret")
+
+  googlesheets4::sheet_add(Sys.getenv("GOOGLE_SHEET_ID"), sheet_name)
+  googlesheets4::sheet_append(
+    Sys.getenv("GOOGLE_SHEET_ID"),
+    data.frame(matrix(columns, nrow = 1)),
+    sheet_name
+  )
+}
+
+
+#' Add visit tracking to Shiny app
 #'
 #' Log session ID, username (only for Private apps), session start, end and
 #' duration to a Google sheet.
 #'
-#' @param columns Which columns to record, from id, username, login, logout and
-#'  duration. By default all will be recorded.
-#' @param session Shiny session object.
+#' @param sheet_name Name for the sheet. Default is to use current package name.
+#' @param columns Which columns to log, from id, username, login, logout and
+#'  duration. By default login, logout and duration will be logged.
+#' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
 #'
-#' @return Nothing; used for side effect.
+#' @return Nothing, used for side-effects only
+#'
 #' @export
 #'
 #' @examples
@@ -24,46 +177,25 @@
 #'
 #' shinyApp(ui, server)
 #' }
-#'
-set_user_tracking <- function(columns = NULL, session) {
-  known_cols <- c(
-    "id",
-    "username",
-    "login",
-    "logout",
-    "duration"
+use_logging <- function(sheet_name = pkgload::pkg_name(),
+                         columns = c("login", "logout", "duration"),
+                         creds = ".google-sheets-credentials") {
+  columns <- check_cols(columns)
+
+  stopifnot(
+    "set_user_tracking can run only in a Shiny app" = shiny::isRunning(),
+    "set_user_tracking requires a Shiny session object to run" = exists(
+      "session",
+      parent.frame()
+    )
   )
 
-  if (is.null(columns)) {
-    columns <- known_cols
-  } else {
-    stopifnot({
-      columns %in% known_cols
-    })
-  }
+  session <- get("session", parent.frame())
 
-  eval_lines(".google-sheets-credentials")
-
-  google_email <- NULL
-  sheet_id <- NULL
-
-  try({
-    google_email <- get("GOOGLE_SHEET_USER")
-  })
-  try({
-    sheet_id <- get("GOOGLE_SHEET_ID")
-  })
-
-  if (is.null(google_email) || is.null(sheet_id)) {
-    warning(
-      "Credentials missing for shinyusertracking::set_user_tracking",
-      call. = FALSE
-    )
-    return()
-  }
+  set_credentials(creds)
 
   googlesheets4::gs4_auth(
-    email = google_email,
+    email = Sys.getenv("GOOGLE_SHEET_USER"),
     cache = ".secret/"
   )
 
@@ -94,40 +226,9 @@ set_user_tracking <- function(columns = NULL, session) {
     session$userData$tracking$duration <- as.character(duration)
 
     googlesheets4::sheet_append(
-      sheet_id,
-      subset(session$userData$tracking, select = columns)
+      Sys.getenv("GOOGLE_SHEET_ID"),
+      subset(session$userData$tracking, select = columns),
+      sheet_name
     )
   })
-}
-
-
-#' Evaluate each line of plain text file
-#'
-#' Reads a plain text file line by line, evaluating each line. Useful for
-#' creating variables dynamically, e.g. reading in parameters.
-#'
-#' @param filepath Filepath as a String.
-#' @param envir Environment to evaluate in. Default is calling environment.
-#'
-#' @return Nothing
-#'
-#' @examples
-#' \dontrun{
-#' filepath <- tempfile()
-#' writeLines(
-#'   text = "LEFT = \"right\"",
-#'   con = filepath
-#' )
-#' eval_lines(filepath)
-#' print(LEFT)
-#' unlink(filepath) # delete temporary file
-#' rm(left) # remove example variable
-#' }
-eval_lines <- function(filepath, envir = parent.frame()) {
-  con <- file(filepath, open = "r")
-  on.exit(close(con))
-
-  while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
-    eval(parse(text = line), envir = envir)
-  }
 }
