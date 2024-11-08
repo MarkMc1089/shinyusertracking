@@ -2,5 +2,5 @@
 
 export(add_credentials)
 export(set_credentials)
-export(set_user_tracking)
 export(setup_sheet)
+export(use_logging)

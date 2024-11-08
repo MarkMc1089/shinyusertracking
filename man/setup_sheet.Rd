@@ -6,15 +6,15 @@
 \usage{
 setup_sheet(
   sheet_name = pkgload::pkg_name(),
-  columns = NULL,
+  columns = c("login", "logout", "duration"),
   creds = ".google-sheets-credentials"
 )
 }
 \arguments{
 \item{sheet_name}{Name for the sheet. Default is to use current package name.}
 
-\item{columns}{Either NULL or vector of column names. Names must be known. Known
-columns are id, username, login, logout and duration}
+\item{columns}{Which columns to log, from id, username, login, logout and
+duration. By default login, logout and duration will be logged.}
 
 \item{creds}{File used to store credentials. Defaults to \code{.google-sheets-credentials}.}
 }

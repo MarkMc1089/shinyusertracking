@@ -9,14 +9,13 @@
 
 ## Installation
 
-You can install `shinyusertracking` from [GitHub](https://github.com/) with:
+To install this package from GitHub, use the below code. Note that you must explicitly ask for vignettes to be built when installing from GitHub.
 
-``` r
-# install.packages("devtools")
-devtools::install_github("nhsbsa-data-analytics/shinyusertracking")
-```
+`remotes::install_github("nhsbsa-data-analytics/shinyusertracking", build_vignettes = TRUE)`
 
 ## Usage
+
+Fields available for logging are:
 
 Column|Description
 :---:|:---: 
@@ -26,19 +25,15 @@ login|Timestamp of session start
 logout|Timestamp of session end
 duration|Duration of session in `hh:mm:ss` format
 
-1. Create a new Google sheet, with column headers corresponding to the columns you will be recording (they can be named differently to the columns given if you want).
-2. Copy the contents of the file `.google-sheets-credentials.example` in this repo to a file named `.google-sheets-credentials` in the root directory of your app.
-3. IMPORTANT: You must tell git to ignore this! `usethis::use_git_ignore(".google-sheets-credentials")`.
-4. IMPORTANT: While you are at it, also `usethis::use_git_ignore(".secret/")`. This is the directory in which the Google authorisation secret will be stored.
-5. Replace the example for `GOOGLE_SHEET_ID` with the ID of the Google sheet. You can find this in the URL. For example, if the URL is `https://docs.google.com/spreadsheets/d/1vwrKiwX4T_-A2IldWnjcd1PHlCDsGAq9U-yTtQ6tgzk/edit?gid=0#gid=0`, the ID is `1vwrKiwX4T_-A2IldWnjcd1PHlCDsGAq9U-yTtQ6tgzk`.
-6. Replace the example for `GOOGLE_SHEET_USER` with the Google account username. See the page _Coding and Dashboards/ R code/Shiny app visit tracking_ in the DALL Wiki for details of a Data Science team Google account to use.
-7. Add the code at the top of your `server` function.
-8. The first time it is run, you will be asked to authenticate the Google account access. Once this is done, an authorisation token will be stored in the `.secrets` directory. This can be reused when adding visit tracking for another app. So alternatively, you could copy an existing `.secret` directory, with the token inside, and paste into the root directory of your app. Note that you will not be able to confirm the access on AVDs, as the Google pages to do so are not whitelisted. See the page _Coding and Dashboards/ R code/Shiny app visit tracking_ in the DALL Wiki for details of where to find an existing token.
-8. Ensure you bundle both the `.google-sheets-credentials` file and the `.secret` directory when your app is deployed.
+By default, `login`, `logout` and `duration` will be logged. Although `sessionid` and `username` are also available, these have potential to be treated as PII, so please ensure you meet any legal obligations if logging these.
 
-Note that 'visits' when running it locally in development will also track. So you might want to introduce some configuration to only run in production. Alternatively, try to remember to delete any entries logged during development from the Google sheet.
+For instructions on using check out the vignette by running `vignette("adding-logging-to-a-shiny-app", "shinyusertracking")`.
+
+Note that 'visits' when running it locally in development will also be logged. So you might want to introduce some configuration to only run in production. Alternatively, try to remember to delete any entries logged during development from the Google sheet.
 
 ## Example
+
+Once the necessary credentials are in place, and a Google sheet is ready to be logged to, just place the a call to `use_logging()` at the top of your server function.
 
 ``` r
 library(shiny)
@@ -46,19 +41,8 @@ library(shiny)
 ui <- fluidPage()
   
 server <- function(input, output, session) {
-  shinyusertracking::set_user_tracking(
-    session
-  )
+  shinyusertracking::use_logging()
 }
 
 shinyApp(ui, server)
-```
-
-Optionally, you can choose to log specific columns only.
-
-``` r
-shinyusertracking::set_user_tracking(
-  columns = c("login", "logout", "duration"),
-  session
-)   
 ```

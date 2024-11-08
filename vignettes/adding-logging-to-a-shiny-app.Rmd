@@ -1,8 +1,8 @@
 ---
-title: "Adding tracking to a shiny app"
+title: "Adding logging to a shiny app"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Adding tracking to a shiny app}
+  %\VignetteIndexEntry{Adding logging to a shiny app}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,11 +18,17 @@ knitr::opts_chunk$set(
 
 ### ID of Google sheet to use
 
-To keep all tracking sheets together, it is advised to create an initial Google sheet and then add new sheets as you add tracking to apps. You will need the ID of the initial sheet. This can be found from the URL.
+To keep all logging sheets together, it is advised to create an initial Google sheet and then add new sheets as you add logging to apps. You will need the ID of the initial sheet. This can be found from the URL.
 
 #### Example
 
-A sheet with URL `https://docs.google.com/spreadsheets/d/1PZJ_xCbZPSlMzfmjtrM0ePB6115Qqp5fYmLxTNTa5ms/edit?gid=0#gid=0` has ID `1PZJ_xCbZPSlMzfmjtrM0ePB6115Qqp5fYmLxTNTa5ms`
+A sheet with URL 
+
+```
+https://docs.google.com/spreadsheets/d/1PZJ_xCbZPSlMzfmjtrM0ePB6115Qqp5fYmLxTNTa5ms/edit?gid=0#gid=0
+```
+
+has ID `1PZJ_xCbZPSlMzfmjtrM0ePB6115Qqp5fYmLxTNTa5ms`
 
 ### Google account username
 
@@ -36,33 +42,27 @@ These pop-ups will allow the credentials to be cached in your OS secrets store s
 
 The file in which credentials are saved will be added to the `.gitignore` file automatically.
 
-## Set up tracking sheet
+## Set up logging sheet
 
-Once the credentials are added you can add a new sheet to track the app. To do this, again ensuring you are in the root directory of the R project containing the app, run `setup_sheet()`. This will append a new sheet to the sheet with ID provided earlier. It is recommended to track only the `login`, `logout` and `duration`. Although `sessionid` and `username` are also available, these have potential to be treated as PII.
-
-``` r
-setup_sheet(columns = c("login", "logout", "duration"))
-```
+Once the credentials are added you can add a new sheet for the app. To do this, again ensuring you are in the root directory of the R project containing the app, run `setup_sheet()`. This will append a new sheet to the sheet with ID provided earlier. By default, `login`, `logout` and `duration` will be logged. Although `sessionid` and `username` are also available, these have potential to be treated as PII.
 
 Before the sheet can be added, authorisation must take place. You have two options.
 
 Option 1. Place an existing authorisation file in a folder `.secret`, within the root folder of the project.
+
 Option 2. Let a browser window open, and confirm authorisation. This will save an authorisation file in `.secret`.
 
 The `.secret` folder, whether pasted in or created anew, will be added to the `.gitignore` file automatically.
 
 ## Add code to server function
 
-Add the tracking code to the shiny server function. This should be placed at the top, before any other code.
+Add the logging code to the shiny server function. This should be placed at the top, before any other code.
 
 ``` r
 server <- function(input, output, session) {
-  shinyusertracking::set_user_tracking(
-    session,
-    columns = c("login", "logout", "duration")
-  )
+  shinyusertracking::use_logging()
   
-  ... # Existing code below!
+  ... # Existing code below
   ...
   ...
 }

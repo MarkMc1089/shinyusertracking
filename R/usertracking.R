@@ -114,8 +114,8 @@ check_cols <- function(columns) {
 #' Add a new sheet for tracking to the Google sheets
 #'
 #' @param sheet_name Name for the sheet. Default is to use current package name.
-#' @param columns Either NULL or vector of column names. Names must be known. Known
-#'  columns are id, username, login, logout and duration
+#' @param columns Which columns to log, from id, username, login, logout and
+#'  duration. By default login, logout and duration will be logged.
 #' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
 #'
 #' @return Nothing, used for side-effects only
@@ -127,7 +127,7 @@ check_cols <- function(columns) {
 #' setup_sheet("A new Shiny app", c("login", "logout", "duration"))
 #' }
 setup_sheet <- function(sheet_name = pkgload::pkg_name(),
-                        columns = NULL,
+                        columns = c("login", "logout", "duration"),
                         creds = ".google-sheets-credentials") {
   columns <- check_cols(columns)
 
@@ -154,10 +154,9 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(),
 #' Log session ID, username (only for Private apps), session start, end and
 #' duration to a Google sheet.
 #'
-#' @param session Shiny session object.
 #' @param sheet_name Name for the sheet. Default is to use current package name.
-#' @param columns Which columns to record, from id, username, login, logout and
-#'  duration. By default all will be recorded.
+#' @param columns Which columns to log, from id, username, login, logout and
+#'  duration. By default login, logout and duration will be logged.
 #' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
 #'
 #' @return Nothing, used for side-effects only
@@ -178,11 +177,20 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(),
 #'
 #' shinyApp(ui, server)
 #' }
-set_user_tracking <- function(session,
-                              sheet_name = pkgload::pkg_name(),
-                              columns = NULL,
-                              creds = ".google-sheets-credentials") {
+use_logging <- function(sheet_name = pkgload::pkg_name(),
+                         columns = c("login", "logout", "duration"),
+                         creds = ".google-sheets-credentials") {
   columns <- check_cols(columns)
+
+  stopifnot(
+    "set_user_tracking can run only in a Shiny app" = shiny::isRunning(),
+    "set_user_tracking requires a Shiny session object to run" = exists(
+      "session",
+      parent.frame()
+    )
+  )
+
+  session <- get("session", parent.frame())
 
   set_credentials(creds)
 

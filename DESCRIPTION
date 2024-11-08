@@ -18,4 +18,8 @@ Imports:
     googlesheets4,
     lubridate,
     pkgload,
-    rstudioapi
+    rstudioapi,
+    shiny,
+    usethis
+Suggests:
+    knitr
