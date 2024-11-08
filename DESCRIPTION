@@ -22,4 +22,5 @@ Imports:
     shiny,
     usethis
 Suggests:
-    knitr
+    knitr,
+    rmarkdown
