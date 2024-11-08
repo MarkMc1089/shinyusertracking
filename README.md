@@ -33,7 +33,7 @@ Note that 'visits' when running it locally in development will also be logged. S
 
 ## Example
 
-Once the necessary credentials are in place, and a Google sheet is ready to be logged to, just place the a call to `use_logging()` at the top of your server function.
+Once the necessary credentials are in place, and a Google sheet is ready to be logged to, just place a call to `use_logging()` at the top of your server function.
 
 ``` r
 library(shiny)
