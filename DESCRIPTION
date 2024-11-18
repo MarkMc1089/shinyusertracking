@@ -1,6 +1,6 @@
 Package: shinyusertracking
 Title: Add user tracking to Shiny apps
-Version: 1.0.2.000
+Version: 1.0.3.000
 Authors@R: 
     person(
       "Mark", "McPherson", , 

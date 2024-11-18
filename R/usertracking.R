@@ -146,6 +146,12 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(),
     data.frame(matrix(columns, nrow = 1)),
     sheet_name
   )
+
+  cat(
+    "URL: https://docs.google.com/spreadsheets/d/",
+    Sys.getenv("GOOGLE_SHEET_ID"),
+    sep = ""
+  )
 }
 
 
@@ -158,6 +164,7 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(),
 #' @param columns Which columns to log, from id, username, login, logout and
 #'  duration. By default login, logout and duration will be logged.
 #' @param creds File used to store credentials. Defaults to `.google-sheets-credentials`.
+#' @param no_local Whether to ignore local sessions. Default is TRUE.
 #'
 #' @return Nothing, used for side-effects only
 #'
@@ -178,8 +185,18 @@ setup_sheet <- function(sheet_name = pkgload::pkg_name(),
 #' shinyApp(ui, server)
 #' }
 use_logging <- function(sheet_name = pkgload::pkg_name(),
-                         columns = c("login", "logout", "duration"),
-                         creds = ".google-sheets-credentials") {
+                        columns = c("login", "logout", "duration"),
+                        creds = ".google-sheets-credentials",
+                        no_local = TRUE) {
+  # If session appears to be local, do nothing
+  is_server <- nzchar(Sys.getenv("SHINY_PORT"))
+  if (no_local && !is_server) {
+    usethis::ui_info(
+      "shinyusertracking logging in use, but ignoring as session appears to be local"
+    )
+    return()
+  }
+
   columns <- check_cols(columns)
 
   stopifnot(
@@ -229,6 +246,12 @@ use_logging <- function(sheet_name = pkgload::pkg_name(),
       Sys.getenv("GOOGLE_SHEET_ID"),
       subset(session$userData$tracking, select = columns),
       sheet_name
+    )
+
+    cat(
+      "URL: https://docs.google.com/spreadsheets/d/",
+      Sys.getenv("GOOGLE_SHEET_ID"),
+      sep = ""
     )
   })
 }
