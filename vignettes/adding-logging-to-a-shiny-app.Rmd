@@ -68,6 +68,21 @@ server <- function(input, output, session) {
 }
 ```
 
+## Shiny apps as packages
+
+If your shiny app is a package, such as when using `golem`, you will need to add this package to your `DESCRIPTION` file in `Imports` and `Remotes`.
+
+```
+Imports:
+    ...,
+    shinyusertracking,
+    ...
+Remotes:
+    ...,
+    nhsbsa-data-analytics/shinyusertracking,
+    ...
+```
+
 ## App deployment
 
 When deploying the shiny app, ensure that both the credentials file (`.google-sheets-credentials` by default) and `.secret` folder are bundled with the usual files.

@@ -7,7 +7,8 @@
 use_logging(
   sheet_name = pkgload::pkg_name(),
   columns = c("login", "logout", "duration"),
-  creds = ".google-sheets-credentials"
+  creds = ".google-sheets-credentials",
+  no_local = TRUE
 )
 }
 \arguments{
@@ -17,6 +18,8 @@ use_logging(
 duration. By default login, logout and duration will be logged.}
 
 \item{creds}{File used to store credentials. Defaults to \code{.google-sheets-credentials}.}
+
+\item{no_local}{Whether to ignore local sessions. Default is TRUE.}
 }
 \value{
 Nothing, used for side-effects only
